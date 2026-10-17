@@ -14,19 +14,19 @@
 
 static int print_prompt(void)
 {
-    char cwd[PATH_MAX];
+    char cwd[PATH_MAX]; //utilizamos la constante del sistema "PATH_MAX" para definir el tamaño máximo del buffer que contendrá el directorio actual
 
     if (!getcwd(cwd, sizeof(cwd))) {
         int error = errno;
-        fprintf(stderr, "%s: no se pudo obtener el directorio actual: %s\n",
+        fprintf(stderr, "%s: no se pudo obtener el directorio actual:   %s\n",
                 SHELL_NAME, strerror(error));
         if (snprintf(cwd, sizeof(cwd), "?") < 0) {
             fprintf(stderr, "%s: no se pudo preparar el prompt\n", SHELL_NAME);
             return -1;
         }
     }
-
-    if (printf("%s:%s$\n ", SHELL_NAME, cwd) < 0) {
+// TODO: eliminar salto de linea una vez que se implemente la lectura de comandos en el bucle principal
+    if (printf("%s:%s>\n ", SHELL_NAME, cwd) < 0) {
         fprintf(stderr, "%s: no se pudo escribir el prompt\n", SHELL_NAME);
         return -1;
     }
