@@ -8,4 +8,7 @@
 
 #define SHELL_NAME "shellby"
 
+/* exec.c */
+int run_external(char **argv, const char *cmdline);
+
 #endif /* SHELL_H */

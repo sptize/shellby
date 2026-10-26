@@ -26,7 +26,7 @@ static int print_prompt(void)
         }
     }
 // TODO: eliminar salto de linea una vez que se implemente la lectura de comandos en el bucle principal
-    if (printf("%s:%s>\n ", SHELL_NAME, cwd) < 0) {
+    if (printf("%s:%s> ", SHELL_NAME, cwd) < 0) {
         fprintf(stderr, "%s: no se pudo escribir el prompt\n", SHELL_NAME);
         return -1;
     }
@@ -84,12 +84,111 @@ static int print_banner(void)
     return 0;
 }
 
+static int tokeniza(char *linea, char **argv, int max_args)
+{
+    int argc = 0;
+    char *p = linea;
+
+    while (*p) {
+        while (*p == ' ' || *p == '\t')
+            p++;
+        if (!*p)
+            break;
+        if (argc >= max_args - 1)
+            return -1;
+
+        char *word = p;
+        char *w = p;
+        char quote = 0;
+        argv[argc++] = word;
+
+        while (*p) {
+            if (quote) {
+                if (*p == quote) {
+                    quote = 0;
+                    p++;
+                } else {
+                    *w++ = *p++;
+                }
+            } else if (*p == '\'' || *p == '"') {
+                quote = *p++;
+            } else if (*p == ' ' || *p == '\t') {
+                p++;
+                break;
+            } else {
+                *w++ = *p++;
+            }
+        }
+        if (quote)
+            return -1;
+
+        *w = '\0';
+    }
+    argv[argc] = NULL;
+    return argc;
+}
+
+static void process_line(char *linea)
+{
+    char *argv[MAX_ARGS];
+    size_t len = strlen(linea);
+
+    /* quitar espacios y saltos de linea finales */
+    while (len > 0 && (linea[len - 1] == '\n' || linea[len - 1] == '\r' || linea[len - 1] == ' ' || linea[len - 1] == '\t'))
+      linea[--len] = '\0';
+
+
+    char *cmdline = strdup(linea);
+    if (!cmdline) {
+        fprintf(stderr, "%s: no hay memoria para procesar la línea\n", SHELL_NAME);
+        return;
+    }
+
+    int argc = tokeniza(linea, argv, MAX_ARGS);
+    if (argc < 0) {
+        fprintf(stderr, "%s: error al analizar la línea de comandos\n", SHELL_NAME);
+        free(cmdline);
+        return;
+    }
+    if (argc == 0) {
+        free(cmdline);
+        return;
+    }
+    run_external(argv, cmdline);
+    free(cmdline);
+}
+
 int main(void)
 {
- 
-    if (print_banner() != 0 || print_prompt() != 0)
+    if (print_banner() != 0)
         return EXIT_FAILURE;
 
-    return EXIT_SUCCESS; //macro de stdlib.h que indica que el programa terminó correctamente
-    
+    char *linea = NULL;
+    size_t capacidad = 0;
+    int resultado = EXIT_SUCCESS;
+
+    for (;;) {
+        if (print_prompt() != 0) {
+            resultado = EXIT_FAILURE;
+            break;
+        }
+
+        if (getline(&linea, &capacidad, stdin) == -1) {
+            if (ferror(stdin)) {
+                int error = errno;
+                fprintf(stderr, "%s: error al leer la entrada: %s\n",
+                        SHELL_NAME, strerror(error));
+                resultado = EXIT_FAILURE;
+            } else if (putchar('\n') == EOF || fflush(stdout) == EOF) {
+                fprintf(stderr, "%s: no se pudo completar la escritura\n", SHELL_NAME);
+                resultado = EXIT_FAILURE;
+            }
+            break;
+        }
+
+        process_line(linea);
+    }
+
+    free(linea);
+    return resultado;
 }
