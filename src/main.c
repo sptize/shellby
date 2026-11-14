@@ -12,8 +12,7 @@
 
 
 int main(void)
-{ 
-  
+{   
   print_banner();
   shell_repl();
   return EXIT_SUCCESS;
