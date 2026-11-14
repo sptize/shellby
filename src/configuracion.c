@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
 #include "shell.h"
-#define MAX_ARGS 256
+
 
       
 void print_banner(void){
+ errno = 0;
  if(puts(
         "\n"
         "\n"
@@ -34,14 +38,22 @@ void print_banner(void){
         "                                                                          m166666\n"
         "\n"
         ) == EOF){
-            fprintf(stderr, "%s: no se pudo completar la escritura del banner\n",
-                SHELL_NAME);
-            exit(EXIT_FAILURE);
+            fprintf(stderr, "%s: error al escribir el banner: %s\n",
+                SHELL_NAME, strerror(errno));
+        
         } else {
              fflush(stdout);
         }       
 }
 
 void print_prompt(void) {
-    printf("%s$ ", SHELL_NAME);
+    char *cwd = getcwd(NULL, 0);
+    if (cwd != NULL) {
+        printf("%s:%s$ ", SHELL_NAME, cwd);
+        free(cwd);  
+    } else {
+        perror("getcwd");
+        fprintf(stderr, "%s: no se pudo obtener el directorio actual: %s\n", SHELL_NAME, strerror(errno));
+    }
+    fflush(stdout);   
 }
