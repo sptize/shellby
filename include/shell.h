@@ -4,8 +4,6 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-#include <stddef.h>
-#include <sys/types.h>
 
 
 #define SHELL_NAME "shellby"
