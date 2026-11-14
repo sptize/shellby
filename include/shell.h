@@ -9,10 +9,10 @@
 #define SHELL_NAME "shellby"
 #define shell_running 1
 /* launch.c */
-void shell_repl(void);
+void shell_repl();
 /* configuracion.c */
 void print_banner(void);
-void print_prompt(void);
+void print_prompt();
 /* exec.c */
 int run_external(char **argv, const char *cmdline);
 

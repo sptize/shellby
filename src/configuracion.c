@@ -5,8 +5,6 @@
 #include <errno.h>
 #include "shell.h"
 
-
-      
 void print_banner(void){
  errno = 0;
  if(puts(
@@ -46,7 +44,7 @@ void print_banner(void){
         }       
 }
 
-void print_prompt(void) {
+void print_prompt() {
     char *cwd = getcwd(NULL, 0);
     if (cwd != NULL) {
         printf("%s:%s$ ", SHELL_NAME, cwd);

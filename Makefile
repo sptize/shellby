@@ -1,6 +1,6 @@
 #Makefile - shellby
 CC ?= gcc
-CFLAGS ?= -Wall -Werror -Wextra -pedantic -std=gnu11 -O2 -g -D_GNU_SOURCE
+CFLAGS ?= -Wall -Werror -Wextra -pedantic -std=gnu11 -O2 -g -D_GNU_SOURCE -Iinclude
 LDFLAGS ?= -pthread
 SRC = $(wildcard src/*.c)
 OBJ = $(SRC:src/%.c=build/%.o)
@@ -11,7 +11,7 @@ all: $(BIN)
 $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-build/%.o: src/%.c src/shell.h | build
+build/%.o: src/%.c $(wildcard include/*.h) | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
 build:

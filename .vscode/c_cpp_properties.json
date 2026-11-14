@@ -5,8 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/src",
-                "${workspaceFolder}/tests",
-                "${workspaceFolder}/third_party/Unity/src"
+                "${workspaceFolder}/tests"
+      
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",

@@ -124,7 +124,7 @@ static int eval_args(char **args){
    return EXIT_SUCCESS;
   }
 
-void shell_repl(){
+void shell_repl() {
   char *linea = NULL;
   char **args = NULL;
   size_t buffer = 0;
@@ -139,7 +139,7 @@ void shell_repl(){
     
     } else if (resultado == -1) {
       fprintf(stderr, "%s: error al leer la entrada\n", SHELL_NAME);
-      exit(EXIT_FAILURE);
+      break;
     }    
     else if (resultado == 2) {
       continue; // Ignorar y volver a pedir entrada
