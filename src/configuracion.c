@@ -44,13 +44,13 @@ void print_banner(void){
         }       
 }
 
-void print_prompt() {
+void print_prompt(void) {
     char *cwd = getcwd(NULL, 0);
     if (cwd != NULL) {
         printf("%s:%s$ ", SHELL_NAME, cwd);
         free(cwd);  
     } else {
-        perror("getcwd");
+       
         fprintf(stderr, "%s: no se pudo obtener el directorio actual: %s\n", SHELL_NAME, strerror(errno));
     }
     fflush(stdout);   

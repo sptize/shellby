@@ -9,82 +9,49 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/types.h>
 #include "shell.h"
 
 
-int run_external(char **argv, const char *cmdline)
-{
-    sigset_t chld, old;
-    const char *display_cmd = cmdline ? cmdline : (argv && argv[0] ? argv[0] : "");
 
-    if (!argv || !argv[0]) {
-        fprintf(stderr, "%s: no se recibió un comando para ejecutar\n", SHELL_NAME);
-        return 2;
-    }
+void comando_externo(char **args){
+    fflush(NULL); //flush de todos los buffers abiertos
 
-    if (sigemptyset(&chld) == -1 || sigaddset(&chld, SIGCHLD) == -1) {
-        int error = errno;
-        fprintf(stderr, "%s: no se pudo preparar el bloqueo de SIGCHLD: %s\n",
-                SHELL_NAME, strerror(error));
-        return 1;
-    }
-    if (sigprocmask(SIG_BLOCK, &chld, &old) == -1) {
-        int error = errno;
-        fprintf(stderr, "%s: no se pudo bloquear SIGCHLD: %s\n",
-                SHELL_NAME, strerror(error));
-        return 1;
-    }
+    pid_t pid;
+    int wstatus;
+    pid_t ret;
 
-    pid_t pid = fork();
-    if (pid == -1) {
-        int error = errno;
-        if (sigprocmask(SIG_SETMASK, &old, NULL) == -1) {
-            int restore_error = errno;
-            fprintf(stderr, "%s: no se pudo restaurar la máscara de señales: %s\n",
-                    SHELL_NAME, strerror(restore_error));
+    pid = fork(); //fork devuelve dos veces una por el padre y otra por el hijo
+    
+    if(pid < 0){
+        fprintf(stderr, "%s: %s\n", SHELL_NAME, strerror(errno));      
+        return;
+    }
+    if (pid == 0){
+        //proceso hijo
+        signal(SIGINT, SIG_DFL);
+        if(execvp(args[0], args) == -1){
+            //llega aqui solo si falla la ejecucion         
+            if(errno == ENOENT){
+               fprintf(stderr, "%s: comando no encontrado\n", args[0]);
+                _exit(127); //salida con error
+            }
+            fprintf(stderr, "%s: %s\n", args[0], strerror(errno));
+            _exit(126);           
         }
-        fprintf(stderr, "%s: no se pudo iniciar «%s»: %s\n",
-                SHELL_NAME, display_cmd, strerror(error));
-        return 1;
     }
+    do{
+      ret = waitpid(pid, &wstatus, 0);
+    } while (ret == -1 && errno == EINTR);
 
-    if (pid == 0) {
-        if (sigprocmask(SIG_SETMASK, &old, NULL) == -1) {
-            int error = errno;
-            fprintf(stderr, "%s: no se pudo restaurar la máscara de señales: %s\n",
-                    SHELL_NAME, strerror(error));
-            _exit(126);
-        }
-        execvp(argv[0], argv);
-        int error = errno;
-        fprintf(stderr, "%s: no se pudo ejecutar «%s»: %s\n",
-                SHELL_NAME, display_cmd, strerror(error));
-        _exit(error == ENOENT ? 127 : 126);
+    if (ret == -1){
+      perror("waitpid");
     }
+    else if (WIFEXITED(wstatus)){}
+    else if (WIFSIGNALED(wstatus)){
+      fprintf(stderr, "terminado por la señal %d\n", WTERMSIG(wstatus));
+    }
+   
+    
 
-    int status;
-    pid_t waited;
-    do {
-        waited = waitpid(pid, &status, 0);
-    } while (waited == -1 && errno == EINTR);
-
-    int wait_error = errno;
-    if (sigprocmask(SIG_SETMASK, &old, NULL) == -1) {
-        int error = errno;
-        fprintf(stderr, "%s: no se pudo restaurar la máscara de señales: %s\n",
-                SHELL_NAME, strerror(error));
-        return 1;
-    }
-    if (waited == -1) {
-        fprintf(stderr, "%s: error esperando a «%s»: %s\n",
-                SHELL_NAME, display_cmd, strerror(wait_error));
-        return 1;
-    }
-    if (WIFEXITED(status)) {
-        return WEXITSTATUS(status);
-    }
-    if (WIFSIGNALED(status)) {
-        return 128 + WTERMSIG(status);
-    }
-    return 1;
 }

@@ -7,9 +7,7 @@
 #define MIN_BUFFER_SIZE 64
 #define TOKEN_DELIMITADOR " \t\r\n\a"
 
-//TODO: comprobar si se puede usar readline una libreria externa para leer la entrada de manera mas eficiente y con soporte de historial y autocompletado
 //Adiciona una cadena de caracteres a la linea de entrada, redimensionando el buffer si es necesario
-
 static int agregar_entrada(char **linea, size_t *buffer, size_t *tamano, const char *src, size_t n){
   if(*tamano + n + 1 > *buffer){
     char *temp_linea = realloc(*linea, *tamano + n + 1);
@@ -34,6 +32,7 @@ static int leer_entrada(char **linea, size_t *buffer){
   errno = 0;
   ssize_t bytes_leidos = getline(&trozo, &trozo_cap, stdin);
 
+
   if (bytes_leidos > 0) {
     if(agregar_entrada(linea, buffer, &trozo_tamano, trozo, bytes_leidos) == -1){
       fprintf(stderr, "%s: sin memoria\n", SHELL_NAME);
@@ -56,9 +55,8 @@ static int leer_entrada(char **linea, size_t *buffer){
     }
     free(trozo);
     //Ctrl+D sin texto pendiente: salir
-    if (putchar('\n') == EOF || fflush(stdout) == EOF) {
-      fprintf(stderr, "%s: no se pudo completar la escritura\n", SHELL_NAME);
-      return -1;
+   if (putchar('\n') == EOF || fflush(stdout) == EOF) {
+    fprintf(stderr, "%s: no se pudo completar la escritura\n", SHELL_NAME);    
     }
     return 1;
   }
@@ -69,21 +67,20 @@ static int leer_entrada(char **linea, size_t *buffer){
   }
 
   return -1;
+ }
 }
-}
-
 static char **tokenizar(char *linea){
    int buffer = MIN_BUFFER_SIZE;
    int index = 0;
    char **tokens = malloc(buffer * sizeof(char*));
-   char *token, *copia;
+   char *token, *guardarptr;
 
    if(!tokens){
       fprintf(stderr, "%s: error de volcado\n", SHELL_NAME);
       exit(EXIT_FAILURE);
    }
 
-   token = strtok_r(linea, TOKEN_DELIMITADOR, &copia);
+   token = strtok_r(linea, TOKEN_DELIMITADOR, &guardarptr);
    while(token != NULL) {
      tokens[index++] = token;   
      
@@ -91,11 +88,11 @@ static char **tokenizar(char *linea){
         buffer += MIN_BUFFER_SIZE;
         tokens = realloc(tokens, buffer * sizeof(char*));
         if(!tokens){
-          fprintf(stderr, "%s: error de volcado\n", SHELL_NAME);
+          fprintf(stderr, "%s: sin memoria\n", SHELL_NAME);
           exit(EXIT_FAILURE);
         }
      }
-     token = strtok_r(NULL, TOKEN_DELIMITADOR, &copia); 
+     token = strtok_r(NULL, TOKEN_DELIMITADOR, &guardarptr); 
      
    }
    tokens[index] = NULL;
@@ -104,12 +101,12 @@ static char **tokenizar(char *linea){
 
 
 //TODO: evaluar si valor de retorno void
-static int eval_args(char **args){
+static void eval_args(char **args){
   //int index;
 
   if (args[0] == NULL){
     //Se introdujo una linea en blanco
-    return EXIT_SUCCESS;
+    return;
   }
 
   /*
@@ -118,21 +115,19 @@ static int eval_args(char **args){
       return (*builtin_func[index])(args);
     }
   }
-  return comando_externo(args);
   */
-   printf("Comando recibido: %s\n", args[0]);
-   return EXIT_SUCCESS;
+   comando_externo(args);
+   
   }
 
-void shell_repl() {
+void shell_repl(void) {
   char *linea = NULL;
   char **args = NULL;
   size_t buffer = 0;
 
-  while(shell_running) {
-    errno = 0;
+  while(shell_running) {    
     print_prompt();
-//leemos los datos de stdin
+//1. Leemos los datos de stdin
     int resultado = leer_entrada(&linea, &buffer);
     if (resultado == 1) {
       break; // Salir del bucle si se llegó al final del archivo
@@ -144,14 +139,12 @@ void shell_repl() {
     else if (resultado == 2) {
       continue; // Ignorar y volver a pedir entrada
     }
-//limpiamos y dividimos los datos recibidos para generar los argumentos del comando
-    args = tokenizar(linea);
-  
-//evaluamos el tipo de comando para delegar su ejecucion a la function correspondiente
+//2. Limpiamos y dividimos los datos recibidos para generar los argumentos del comando
+    args = tokenizar(linea);  
+//3. Evaluamos el tipo de comando para delegar su ejecucion a la funcion correspondiente
     eval_args(args);
     free(args);
     args = NULL;
   }
   free(linea);
-
 }

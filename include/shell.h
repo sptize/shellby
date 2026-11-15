@@ -3,17 +3,14 @@
 */
 #ifndef SHELL_H
 #define SHELL_H
-
-
-
 #define SHELL_NAME "shellby"
 #define shell_running 1
 /* launch.c */
-void shell_repl();
+void shell_repl(void);
 /* configuracion.c */
 void print_banner(void);
-void print_prompt();
+void print_prompt(void);
 /* exec.c */
-int run_external(char **argv, const char *cmdline);
+void comando_externo(char **args);
 
 #endif /* SHELL_H */
