@@ -50,8 +50,14 @@ void print_prompt(void) {
         printf("%s:%s$ ", SHELL_NAME, cwd);
         free(cwd);  
     } else {
-       
+        printf("%s:?$ ", SHELL_NAME);
         fprintf(stderr, "%s: no se pudo obtener el directorio actual: %s\n", SHELL_NAME, strerror(errno));
     }
     fflush(stdout);   
+}
+
+void shell_init(Shell *sh){
+    sh-> shell_running = true;
+    //ultimo estado
+    //total de jobs inicial = 0
 }
