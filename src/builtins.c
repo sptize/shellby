@@ -1,3 +1,7 @@
+/*
+ * builtins.c - Comandos internos del shell.
+ */
+
 #include "shell.h"
 #include <string.h>
 #include <stdlib.h>

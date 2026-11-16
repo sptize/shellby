@@ -1,3 +1,7 @@
+/*
+ * configuracion.c - Elementos auxiliares del shell. Estilo y arranque.
+ */ 
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
