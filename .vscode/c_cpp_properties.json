@@ -6,10 +6,9 @@
                 "${workspaceFolder}/include",
                 "${workspaceFolder}/src",
                 "${workspaceFolder}/tests"
-      
             ],
             "compilerPath": "/usr/bin/gcc",
-            "cStandard": "c11",
+            "cStandard": "gnu11",
             "intelliSenseMode": "linux-gcc-x64"
         }
     ],
