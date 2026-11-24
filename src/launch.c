@@ -1,5 +1,5 @@
 /*
- * launch.c - Ciclo de lectura, evaluacion, impresion del shell. 
+ * launch.c - Ciclo de lectura, evaluacion, impresion del shell.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,7 +38,8 @@ static int leer_entrada(char **linea, size_t *buffer)
   {
     errno = 0;
     ssize_t bytes_leidos = getline(&trozo, &trozo_cap, stdin);
-
+    int err = errno;
+    
     if (bytes_leidos > 0)
     {
       if (agregar_entrada(linea, buffer, &trozo_tamano, trozo, bytes_leidos) == -1)
@@ -72,8 +73,9 @@ static int leer_entrada(char **linea, size_t *buffer)
       }
       return 1;
     }
+    
     free(trozo);
-    if (errno == EINTR)
+    if (err == EINTR)
     {
       clearerr(stdin);
       return 2;
@@ -82,6 +84,7 @@ static int leer_entrada(char **linea, size_t *buffer)
     return -1;
   }
 }
+
 static int segundo_plano(char *linea)
 {
   size_t n = strlen(linea);
@@ -100,7 +103,7 @@ static int segundo_plano(char *linea)
   }
   return 0;
 }
-static char **tokenizar(char *linea)
+static char **tokenizar(char *linea, int *argc)
 {
   int buffer = MIN_BUFFER_SIZE;
   int index = 0;
@@ -132,16 +135,15 @@ static char **tokenizar(char *linea)
   }
 
   tokens[index] = NULL;
-
+  *argc = index;
   return tokens;
 }
 
 // TODO: evaluar si valor de retorno void
-static void eval_args(Shell *sh, char **args, int bg)
+static void eval_args(Shell *sh, int argc, char **args, int bg)
 {
-  // int index;
 
-  if (args[0] == NULL)
+  if (argc == 0)
   {
     // Se introdujo una linea en blanco
     return;
@@ -150,7 +152,7 @@ static void eval_args(Shell *sh, char **args, int bg)
   const Builtin *b = buscar_builtin(args[0]);
   if (b)
   {
-    b->ejecutar(sh, args);
+    b->ejecutar(sh, argc, args);
     return;
   }
   comando_externo(args, bg);
@@ -161,6 +163,7 @@ void shell_repl(Shell *sh)
   char *linea = NULL;
   char **args = NULL;
   size_t buffer = 0;
+  int argc = 0;
 
   while (sh->shell_running)
   {
@@ -182,9 +185,9 @@ void shell_repl(Shell *sh)
     }
     int bg = segundo_plano(linea); // enviar o no a segundo plano el comando
     // 2. Limpiamos y dividimos los datos recibidos para generar los argumentos del comando
-    args = tokenizar(linea);
+    args = tokenizar(linea, &argc);
     // 3. Evaluamos el tipo de comando (interno o externo) para delegar su ejecucion a la funcion correspondiente
-    eval_args(sh, args, bg); //TODO: esta es la funcion que devuelve el ultimo estado 
+    eval_args(sh, argc, args, bg); // TODO: esta es la funcion que devuelve el ultimo estado
     free(args);
     args = NULL;
   }

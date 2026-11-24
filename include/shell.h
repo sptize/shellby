@@ -7,16 +7,15 @@
 #define SHELL_NAME "shellby"
 #include <stdbool.h>
 
-
 typedef struct
 {
     bool shell_running;
-    // int ultimo estado => $?
+    // int ultimo estado => tributa a $?
     // TODO: tabla de jobs con cantidad
 } Shell;
 void shell_init(Shell *sh);
 
-typedef int (*builtin_fn)(Shell *sh, char **args);
+typedef int (*builtin_fn)(Shell *sh, int argc, char **argv);
 typedef struct
 {
     const char *nombre;
